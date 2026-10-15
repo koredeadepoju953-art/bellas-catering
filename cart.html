@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your cart | Bella's Kitchen &amp; Events</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="cart">
+  <div id="site-header"></div>
+  <main id="main">
+    <div class="page-title">
+      <div class="container"><h1>Your cart</h1></div>
+    </div>
+    <section class="section">
+      <div class="container" id="cart-root"></div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    function initPage() {
+      const root = document.getElementById("cart-root");
+
+      function draw() {
+        const cart = getCart();
+        if (!cart.length) {
+          root.innerHTML = `
+            <div class="empty">
+              <h2>Your cart is empty</h2>
+              <p class="muted">Add dishes from the menu, then come back here to check out.</p>
+              <a class="btn" href="menu.html">Browse the menu</a>
+            </div>`;
+          return;
+        }
+        const rows = cart.map((l) => {
+          const m = findItem(l.id);
+          return `
+            <div class="cart-row">
+              <div>
+                <h3>${esc(m.name)}</h3>
+                <div class="muted" style="font-size:.9rem">${fmt(m.price)} &middot; ${esc(m.unit)}</div>
+                <button class="link-btn" data-remove="${m.id}">Remove</button>
+              </div>
+              <div class="qty" role="group" aria-label="Quantity for ${esc(m.name)}">
+                <button data-dec="${m.id}" aria-label="Decrease quantity">&minus;</button>
+                <span aria-live="polite">${l.qty}</span>
+                <button data-inc="${m.id}" aria-label="Increase quantity">+</button>
+              </div>
+              <div class="price">${fmt(m.price * l.qty)}</div>
+            </div>`;
+        }).join("");
+
+        root.innerHTML = `
+          <div class="cart-layout">
+            <div>${rows}<p style="margin-top:1rem"><button class="link-btn" id="clear">Clear cart</button></p></div>
+            <aside class="summary" aria-label="Order summary">
+              <h2 style="font-size:1.3rem">Order summary</h2>
+              <div class="line"><span>Items (${cartCount()})</span><span>${fmt(cartTotal(cart))}</span></div>
+              <div class="line muted"><span>Delivery</span><span>Confirmed on WhatsApp</span></div>
+              <div class="line grand"><span>Subtotal</span><span>${fmt(cartTotal(cart))}</span></div>
+              <a class="btn btn-block" style="margin-top:1rem" href="checkout.html">Go to checkout</a>
+              <p class="hint" style="margin-top:.75rem">${esc(SITE.leadTime)}</p>
+            </aside>
+          </div>`;
+      }
+
+      root.addEventListener("click", (e) => {
+        const t = e.target.closest("button");
+        if (!t) return;
+        const cart = getCart();
+        const qtyOf = (id) => (cart.find((l) => l.id === id) || { qty: 0 }).qty;
+        if (t.dataset.inc) setQty(t.dataset.inc, qtyOf(t.dataset.inc) + 1);
+        else if (t.dataset.dec) setQty(t.dataset.dec, qtyOf(t.dataset.dec) - 1);
+        else if (t.dataset.remove) setQty(t.dataset.remove, 0);
+        else if (t.id === "clear") { if (confirm("Remove everything from your cart?")) saveCart([]); }
+        else return;
+        draw();
+      });
+      draw();
+    }
+  </script>
+</body>
+</html>

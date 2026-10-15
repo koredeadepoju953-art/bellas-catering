@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menu | Bella's Kitchen &amp; Events</title>
+  <meta name="description" content="Small chops, pastries, rice trays, grills, drinks and desserts for parties. Order online and confirm on WhatsApp.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="menu">
+  <div id="site-header"></div>
+  <main id="main">
+    <div class="page-title">
+      <div class="container">
+        <h1>Menu</h1>
+        <p>Every item is cooked to order. Add what you need and send your cart on WhatsApp.</p>
+      </div>
+    </div>
+    <section class="section">
+      <div class="container">
+        <div class="toolbar">
+          <div class="chips" id="chips" role="group" aria-label="Filter by category"></div>
+          <div class="search">
+            <label class="sr-only" for="q">Search the menu</label>
+            <input type="search" id="q" placeholder="Search the menu">
+          </div>
+        </div>
+        <div class="grid grid-4" id="items" aria-live="polite"></div>
+        <div class="empty" id="none" hidden>
+          <h3>No items match your search</h3>
+          <p class="muted">Try a different word, or choose All to see the full menu.</p>
+        </div>
+        <div class="notice" style="margin-top:2rem">Looking for something not listed? Message us on WhatsApp and we will quote it.</div>
+      </div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    function initPage() {
+      let cat = "All", term = "";
+      const chips = document.getElementById("chips");
+      const items = document.getElementById("items");
+      const none = document.getElementById("none");
+
+      const render = () => {
+        const list = MENU.filter((m) =>
+          (cat === "All" || m.cat === cat) &&
+          (m.name + " " + m.desc).toLowerCase().includes(term.toLowerCase()));
+        items.innerHTML = list.map(itemCard).join("");
+        none.hidden = list.length > 0;
+      };
+      const drawChips = () => {
+        chips.innerHTML = ["All", ...CATEGORIES].map((c) =>
+          `<button class="chip" data-cat="${esc(c)}" aria-pressed="${c === cat}">${esc(c)}</button>`).join("");
+      };
+      chips.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-cat]");
+        if (!b) return;
+        cat = b.dataset.cat; drawChips(); render();
+      });
+      document.getElementById("q").addEventListener("input", (e) => { term = e.target.value; render(); });
+      drawChips(); render();
+    }
+  </script>
+</body>
+</html>

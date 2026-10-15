@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book an event | Bella's Kitchen &amp; Events</title>
+  <meta name="description" content="Send your event details and get a catering quote on WhatsApp.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="book">
+  <div id="site-header"></div>
+  <main id="main">
+    <div class="page-title">
+      <div class="container">
+        <h1>Book your event</h1>
+        <p>Fill this in and we open WhatsApp with your details ready to send.</p>
+      </div>
+    </div>
+    <section class="section">
+      <div class="container" style="max-width:760px">
+        <div class="notice" id="lead"></div>
+        <form id="book-form" novalidate>
+          <div class="field-row">
+            <div class="field">
+              <label for="name">Your name</label>
+              <input id="name" name="name" autocomplete="name" required>
+              <div class="error" data-for="name"></div>
+            </div>
+            <div class="field">
+              <label for="phone">Phone or WhatsApp number</label>
+              <input id="phone" name="phone" type="tel" autocomplete="tel" required>
+              <div class="error" data-for="phone"></div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="type">Type of event</label>
+              <select id="type" name="type" required>
+                <option value="">Choose one</option>
+                <option>Birthday</option><option>Wedding</option><option>Naming ceremony</option>
+                <option>Graduation</option><option>Office or corporate</option><option>Funeral or memorial</option>
+                <option>Religious event</option><option>Other</option>
+              </select>
+              <div class="error" data-for="type"></div>
+            </div>
+            <div class="field">
+              <label for="date">Event date</label>
+              <input id="date" name="date" type="date" required>
+              <div class="error" data-for="date"></div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="guests">Number of guests</label>
+              <input id="guests" name="guests" type="number" min="10" max="1000" required>
+              <div class="error" data-for="guests"></div>
+            </div>
+            <div class="field">
+              <label for="pack">Package</label>
+              <select id="pack" name="pack"></select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="venue">Venue or delivery address</label>
+            <input id="venue" name="venue" required>
+            <div class="error" data-for="venue"></div>
+          </div>
+          <fieldset>
+            <legend>Add-ons</legend>
+            <div class="checks" id="addons"></div>
+          </fieldset>
+          <div class="field">
+            <label for="notes">Anything else we should know?</label>
+            <textarea id="notes" name="notes"></textarea>
+            <p class="hint">Dietary needs, theme, budget or favourite dishes.</p>
+          </div>
+          <button class="btn btn-wa btn-block" type="submit">Send request on WhatsApp</button>
+          <p class="hint" style="margin-top:.75rem">This opens WhatsApp. Nothing is sent until you press send there.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    function initPage() {
+      const form = document.getElementById("book-form");
+      document.getElementById("lead").textContent = SITE.leadTime;
+
+      const params = new URLSearchParams(location.search);
+      const pack = document.getElementById("pack");
+      pack.innerHTML = '<option value="">Not sure yet</option>' +
+        PACKAGES.map((p) => `<option value="${p.id}">${esc(p.name)} (${fmt(p.perHead)} per guest)</option>`).join("");
+      if (params.get("package")) pack.value = params.get("package");
+      if (params.get("guests")) form.guests.value = params.get("guests");
+
+      document.getElementById("addons").innerHTML = ADDONS.map((a) =>
+        `<label class="check"><input type="checkbox" name="addon" value="${esc(a)}"> ${esc(a)}</label>`).join("");
+
+      // Earliest date: tomorrow
+      const t = new Date(); t.setDate(t.getDate() + 1);
+      form.date.min = t.toISOString().slice(0, 10);
+
+      const setErr = (name, msg) => { form.querySelector(`[data-for="${name}"]`).textContent = msg; };
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        let ok = true;
+        const need = { name: "Enter your name.", phone: "Enter a phone number we can reach.", type: "Choose the type of event.",
+                       date: "Choose the event date.", guests: "Enter the number of guests.", venue: "Enter the venue or address." };
+        Object.keys(need).forEach((k) => {
+          const v = form[k].value.trim();
+          const bad = !v || (k === "guests" && Number(v) < 1);
+          setErr(k, bad ? need[k] : "");
+          if (bad) ok = false;
+        });
+        if (!ok) { form.querySelector(".error:not(:empty)").previousElementSibling.focus(); return; }
+
+        const addons = [...form.querySelectorAll('input[name="addon"]:checked')].map((c) => c.value);
+        const p = PACKAGES.find((x) => x.id === form.pack.value);
+        const dateStr = new Date(form.date.value + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+        const lines = [
+          "Hello " + SITE.name + ", I would like a quote for an event.",
+          "",
+          "Name: " + form.name.value.trim(),
+          "Phone: " + form.phone.value.trim(),
+          "Event: " + form.type.value,
+          "Date: " + dateStr,
+          "Guests: " + form.guests.value,
+          "Package: " + (p ? p.name + " (" + fmt(p.perHead) + " per guest)" : "Not sure yet"),
+          "Venue: " + form.venue.value.trim(),
+          "Add-ons: " + (addons.length ? addons.join(", ") : "None"),
+          "Notes: " + (form.notes.value.trim() || "None")
+        ];
+        window.open(waLink(lines.join("\n")), "_blank", "noopener");
+        toast("Opening WhatsApp");
+      });
+    }
+  </script>
+</body>
+</html>

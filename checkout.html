@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout | Bella's Kitchen &amp; Events</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="checkout">
+  <div id="site-header"></div>
+  <main id="main">
+    <div class="page-title">
+      <div class="container"><h1>Checkout</h1><p>Send your order on WhatsApp and we will confirm the price and delivery.</p></div>
+    </div>
+    <section class="section">
+      <div class="container" id="co-root"></div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    function initPage() {
+      const root = document.getElementById("co-root");
+      const cart = getCart();
+
+      if (!cart.length) {
+        root.innerHTML = `
+          <div class="empty">
+            <h2>Nothing to check out yet</h2>
+            <p class="muted">Add dishes to your cart first.</p>
+            <a class="btn" href="menu.html">Browse the menu</a>
+          </div>`;
+        return;
+      }
+
+      const t = new Date(); t.setDate(t.getDate() + 1);
+      const minDate = t.toISOString().slice(0, 10);
+
+      root.innerHTML = `
+        <div class="cart-layout">
+          <form id="co-form" novalidate>
+            <div class="field-row">
+              <div class="field"><label for="name">Your name</label><input id="name" autocomplete="name" required><div class="error" data-for="name"></div></div>
+              <div class="field"><label for="phone">Phone or WhatsApp number</label><input id="phone" type="tel" autocomplete="tel" required><div class="error" data-for="phone"></div></div>
+            </div>
+            <fieldset>
+              <legend>How do you want your order?</legend>
+              <div class="checks">
+                <label class="check"><input type="radio" name="mode" value="Delivery" checked> Delivery</label>
+                <label class="check"><input type="radio" name="mode" value="Pickup"> Pickup</label>
+              </div>
+            </fieldset>
+            <div class="field" id="addr-field">
+              <label for="address">Delivery address</label>
+              <input id="address" autocomplete="street-address">
+              <div class="error" data-for="address"></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label for="date">Date needed</label><input id="date" type="date" min="${minDate}" required><div class="error" data-for="date"></div></div>
+              <div class="field"><label for="time">Time needed</label><input id="time" type="time" required><div class="error" data-for="time"></div></div>
+            </div>
+            <div class="field">
+              <label for="notes">Notes</label>
+              <textarea id="notes"></textarea>
+              <p class="hint">Allergies, spice level, landmarks near your address.</p>
+            </div>
+            <button class="btn btn-wa btn-block" type="submit">Send order on WhatsApp</button>
+            <p class="hint" style="margin-top:.75rem">This opens WhatsApp. Nothing is sent until you press send there. You pay after we confirm.</p>
+          </form>
+          <aside class="summary" aria-label="Order summary">
+            <h2 style="font-size:1.3rem">Your order</h2>
+            ${cart.map((l) => { const m = findItem(l.id); return `<div class="line"><span>${l.qty} &times; ${esc(m.name)}</span><span>${fmt(m.price * l.qty)}</span></div>`; }).join("")}
+            <div class="line grand"><span>Subtotal</span><span>${fmt(cartTotal(cart))}</span></div>
+            <p class="hint">Delivery fee is added after we confirm your location.</p>
+            <a class="link-btn" href="cart.html">Edit cart</a>
+          </aside>
+        </div>`;
+
+      const form = document.getElementById("co-form");
+      const addrField = document.getElementById("addr-field");
+      const val = (id) => document.getElementById(id).value.trim();
+      const setErr = (n, m) => { form.querySelector(`[data-for="${n}"]`).textContent = m; };
+
+      form.addEventListener("change", (e) => {
+        if (e.target.name === "mode") addrField.hidden = e.target.value === "Pickup";
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const mode = form.querySelector('input[name="mode"]:checked').value;
+        const need = { name: "Enter your name.", phone: "Enter a phone number we can reach.", date: "Choose the date.", time: "Choose a time." };
+        if (mode === "Delivery") need.address = "Enter the delivery address.";
+        let first = null;
+        ["name", "phone", "address", "date", "time"].forEach((k) => {
+          const bad = need[k] && !val(k);
+          setErr(k, bad ? need[k] : "");
+          if (bad && !first) first = k;
+        });
+        if (first) { document.getElementById(first).focus(); return; }
+
+        const cartNow = getCart();
+        const dateStr = new Date(val("date") + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+        const lines = [
+          "Hello " + SITE.name + ", I would like to place an order.",
+          "",
+          ...cartNow.map((l) => { const m = findItem(l.id); return l.qty + " x " + m.name + " (" + m.unit + ") - " + fmt(m.price * l.qty); }),
+          "",
+          "Subtotal: " + fmt(cartTotal(cartNow)),
+          "",
+          "Name: " + val("name"),
+          "Phone: " + val("phone"),
+          mode === "Delivery" ? "Delivery to: " + val("address") : "Pickup",
+          "Needed: " + dateStr + " at " + val("time"),
+          "Notes: " + (val("notes") || "None")
+        ];
+        window.open(waLink(lines.join("\n")), "_blank", "noopener");
+
+        saveCart([]);
+        root.innerHTML = `
+          <div class="success">
+            <h2>Your order is ready to send</h2>
+            <p>WhatsApp should have opened with your order. Press send there and we will reply with the final price, delivery fee and payment details.</p>
+            <p class="muted">If WhatsApp did not open, tap the button below.</p>
+            <p><a class="btn btn-wa" href="${waLink(lines.join("\n"))}" target="_blank" rel="noopener">Open WhatsApp again</a>
+            <a class="btn btn-line" style="color:var(--indigo)" href="menu.html">Back to the menu</a></p>
+          </div>`;
+        window.scrollTo({ top: 0 });
+      });
+    }
+  </script>
+</body>
+</html>

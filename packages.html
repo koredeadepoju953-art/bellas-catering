@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Party packages | Bella's Kitchen &amp; Events</title>
+  <meta name="description" content="Per-guest party catering packages for small gatherings, weddings and large events.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="packages">
+  <div id="site-header"></div>
+  <main id="main">
+    <div class="page-title">
+      <div class="container">
+        <h1>Party packages</h1>
+        <p>Priced per guest. Pick the size of your event and we handle the rest.</p>
+      </div>
+    </div>
+    <section class="section">
+      <div class="container">
+        <div class="grid grid-3" id="packs"></div>
+        <div class="notice" style="margin-top:2rem" id="lead"></div>
+      </div>
+    </section>
+    <section class="section section-tint">
+      <div class="container">
+        <div class="section-head">
+          <h2>Add-ons</h2>
+          <p>Add any of these to a package when you book.</p>
+        </div>
+        <div class="chips" id="addons"></div>
+      </div>
+    </section>
+    <section class="cta-band">
+      <div class="container">
+        <h2>Not sure which package fits?</h2>
+        <p>Tell us your guest count and budget. We will suggest the best option.</p>
+        <a class="btn btn-gold" href="book.html">Get a quote</a>
+      </div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    function initPage() {
+      document.getElementById("packs").innerHTML = PACKAGES.map((p) => `
+        <article class="pack${p.featured ? " featured" : ""}">
+          ${p.featured ? '<span class="badge">Most booked</span>' : ""}
+          <h2 style="font-size:1.5rem">${esc(p.name)}</h2>
+          <p class="muted">${esc(p.blurb)}</p>
+          <div class="per">${fmt(p.perHead)} <small>per guest</small></div>
+          <p class="hint">For ${p.min} to ${p.max} guests. From ${fmt(p.perHead * p.min)}.</p>
+          <ul>${p.includes.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
+          <a class="btn${p.featured ? "" : " btn-line"}" ${p.featured ? "" : 'style="color:var(--indigo)"'} href="book.html?package=${p.id}">Choose ${esc(p.name)}</a>
+        </article>`).join("");
+      document.getElementById("lead").textContent = SITE.leadTime;
+      document.getElementById("addons").innerHTML = ADDONS.map((a) => `<span class="chip">${esc(a)}</span>`).join("");
+    }
+  </script>
+</body>
+</html>

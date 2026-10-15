@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bella's Kitchen &amp; Events | Party catering and snacks</title>
+  <meta name="description" content="Party food, small chops and event catering. Choose a package, order online and confirm on WhatsApp.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="home">
+  <div id="site-header"></div>
+
+  <main id="main">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <h1>Food for the whole party, ready when your guests are.</h1>
+          <p class="lead" style="color:rgba(255,255,255,.82)">Rice trays, small chops, grills, pastries and drinks for birthdays, weddings, naming ceremonies and office events.</p>
+          <div class="hero-actions">
+            <a class="btn btn-gold" href="book.html">Book your event</a>
+            <a class="btn btn-line" href="menu.html">Order from the menu</a>
+          </div>
+        </div>
+
+        <aside class="planner" aria-labelledby="planner-title">
+          <h2 id="planner-title">Plan your party</h2>
+          <p class="muted" style="font-size:.95rem">Slide to your guest count for a package and a rough price.</p>
+          <label for="guests">Number of guests</label>
+          <div class="guests-out" id="guests-out" aria-live="polite">50</div>
+          <input type="range" id="guests" min="10" max="300" step="5" value="50">
+          <dl>
+            <dt>Package</dt><dd id="pl-pack"></dd>
+            <dt>Price per guest</dt><dd id="pl-per"></dd>
+            <dt>Estimated total</dt><dd class="total" id="pl-total"></dd>
+          </dl>
+          <a class="btn btn-block" id="pl-book" href="book.html">Book this package</a>
+          <p class="hint">Estimate only. Drinks, decor and delivery are confirmed in your quote.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <h2>What guests ask for most</h2>
+          <p>Add to your cart and send the order on WhatsApp. No account needed.</p>
+        </div>
+        <div class="grid grid-4" id="popular"></div>
+        <p style="margin-top:1.5rem"><a class="btn btn-line" style="color:var(--indigo)" href="menu.html">See the full menu</a></p>
+      </div>
+    </section>
+
+    <section class="section section-tint">
+      <div class="container">
+        <div class="section-head">
+          <h2>How it works</h2>
+        </div>
+        <ol class="steps">
+          <li><h3>Tell us about your event</h3><p>Pick a package or build your own order. Add your date, guest count and venue.</p></li>
+          <li><h3>Get a quote on WhatsApp</h3><p>We reply with the full price, delivery fee and what we need from you.</p></li>
+          <li><h3>Pay a deposit</h3><p>A deposit holds your date. The balance is due before delivery.</p></li>
+          <li><h3>We cook, deliver and set up</h3><p>Food arrives hot and on time. Staff and setup are available with larger packages.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <h2>Party packages</h2>
+          <p>Priced per guest, so it is easy to plan a budget.</p>
+        </div>
+        <div class="grid grid-3" id="packs"></div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="reviews" hidden>
+      <div class="container">
+        <div class="section-head"><h2>What customers say</h2></div>
+        <div class="grid grid-3" id="review-list"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container" style="max-width:820px">
+        <div class="section-head"><h2>Questions we get asked</h2></div>
+        <div id="faqs"></div>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="container">
+        <h2>Tell us the date. We will handle the food.</h2>
+        <p>Send your event details and we will reply with a quote.</p>
+        <a class="btn btn-gold" href="book.html">Book your event</a>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    function initPage() {
+      // Popular items
+      const popularIds = ["sc-platter", "rm-benachin", "gr-suya", "dr-bissap"];
+      document.getElementById("popular").innerHTML = popularIds.map((id) => itemCard(findItem(id))).join("");
+
+      // Planner
+      const range = document.getElementById("guests");
+      const update = () => {
+        const g = Number(range.value);
+        const p = packageFor(g);
+        document.getElementById("guests-out").textContent = g;
+        document.getElementById("pl-pack").textContent = p.name;
+        document.getElementById("pl-per").textContent = fmt(p.perHead);
+        document.getElementById("pl-total").textContent = fmt(p.perHead * g);
+        document.getElementById("pl-book").href = "book.html?package=" + p.id + "&guests=" + g;
+      };
+      range.addEventListener("input", update);
+      update();
+
+      // Packages
+      document.getElementById("packs").innerHTML = PACKAGES.map((p) => `
+        <article class="pack${p.featured ? " featured" : ""}">
+          ${p.featured ? '<span class="badge">Most booked</span>' : ""}
+          <h3>${esc(p.name)}</h3>
+          <p class="muted">${esc(p.blurb)}</p>
+          <div class="per">${fmt(p.perHead)} <small>per guest</small></div>
+          <p class="hint">For ${p.min} to ${p.max} guests</p>
+          <ul>${p.includes.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
+          <a class="btn${p.featured ? "" : " btn-line"}" ${p.featured ? "" : 'style="color:var(--indigo)"'} href="book.html?package=${p.id}">Choose ${esc(p.name)}</a>
+        </article>`).join("");
+
+      // Reviews (only shown when real reviews are added in data.js)
+      if (TESTIMONIALS.length) {
+        document.getElementById("reviews").hidden = false;
+        document.getElementById("review-list").innerHTML = TESTIMONIALS.map((t) =>
+          `<blockquote><p>${esc(t.q)}</p><footer>${esc(t.who)}</footer></blockquote>`).join("");
+      }
+
+      // FAQs
+      document.getElementById("faqs").innerHTML = FAQS.map(([q, a]) =>
+        `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("");
+    }
+  </script>
+</body>
+</html>
